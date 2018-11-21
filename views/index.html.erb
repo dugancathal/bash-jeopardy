@@ -1,0 +1,16 @@
+<div class="jeopardy-board">
+  <% @categories.each do |category| %>
+    <div class="tile">
+      <p><%= category %></p>
+    </div>
+  <% end %>
+  <% [100, 200, 300].each do |points| %>
+    <% @categories.each do |category| %>
+      <div>
+        <a class="tile" href="/questions/<%= category %>-<%= points %>">
+          <p><%= points %></p>
+        </a>
+      </div>
+    <% end %>
+  <% end %>
+</div>

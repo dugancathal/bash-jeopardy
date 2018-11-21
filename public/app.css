@@ -1,0 +1,51 @@
+body {
+  font-size: 24px;
+  margin: 0;
+  padding: 0;
+}
+
+.jeopardy-board {
+  display: grid;
+  grid-template-columns: repeat(6, calc(16.66% - 1rem));
+  grid-gap: 1rem;
+
+  padding: 1rem;
+}
+
+.tile {
+  padding: 2rem;
+  border-radius: 0.25rem;
+  background-color: blue;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.visited-tile {
+  background-color:gray;
+}
+
+.question {
+  display: flex;
+  height: 100vh;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 3rem;
+}
+
+.answers {
+  font-size: 1rem;
+}
+
+.actions {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+}
+
+code {
+  background-color: lightgray;
+}

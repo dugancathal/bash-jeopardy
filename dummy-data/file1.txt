@@ -1,0 +1,2 @@
+Inside file1.txt
+Also inside file1.txt

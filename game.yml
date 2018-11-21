@@ -1,0 +1,227 @@
+questions:
+  scripting-101-100: &scripting-101-100
+    question: |
+      Why is this invalid?
+      echo "Hi Mom!"
+    answer: |
+      Bang (!), in this case, is being interpolated causing bash to think that `!"` is an 'event'.
+      To solve that, here, you could use single quotes `'`.
+      This causes bash to treat the string as a literal.
+  scripting-101-200: &scripting-101-200
+    question: |
+      for file in file*.txt; do
+        cat $file
+      done
+    answer: |
+      Iterate over and print all files starting with `file` and ending with `.txt`.
+  scripting-101-300: &scripting-101-300
+    question: |
+      if [[ “$age” == 29 ]]; then
+        echo “You are $age”
+      fi
+    answer: |
+      Print "You are 29" if `$age == 29`
+
+  symbology-101-100: &symbology-101-100
+    question: |
+      $! vs !$
+    answer: |
+      `$!` (and pretty much all things that start with `$`) are variables in bash.
+      So in this case, `$!` is accessing the `!` variable - meaning the most recent command's exit status.
+      `!$` (and many things that start with `!`) are called 'events'.
+      Events _usually_ refer to things in the command history.
+      In this case, `!$` refers to the last 'word' of the last command.
+      e.g.
+      ```
+        echo foo bar "baz qux"
+        echo !$ # prints "baz qux"
+      ```
+  symbology-101-200: &symbology-101-200
+    question: |
+      # What does this print?
+      echo foo "bar baz" bananas
+      echo "this stuff is !:3"
+    answer: |
+      `!:3` refers to an 'event'
+      In this case, it refers to the 3rd 'word' of the most recent command.
+  symbology-101-300: &symbology-101-300
+    question: |
+      names=(brianna bob beyonce)
+      for name in "${names[@]}"; do
+        echo "Hello ${name}"
+      done
+    answer: |
+      Construct an array of names (using bash word style) and then print "Hello $name" for each value in the array.
+
+  symbology-201-100: &symbology-201-100
+    question: |
+      vim ~/home/tmp/foo.txt
+      mkdir -p !$:h # what is this?
+    answer: |
+      `!$` is an event which refers to the last 'word' of the last command.
+      `:h` here is a modifier on the event that (assuming the event is a path) returns the head.
+      The above command would make the directory `~/home/tmp`
+  symbology-201-200: &symbology-201-200
+    question: |
+      echo /usr/local/bin/var/bin/foo
+      !!:gs/bin/sbin # what does this print?
+    answer: |
+      Another event, `!!` refers to the whole previous command.
+      `:gs` is a modifier to that event that 'globally substitutes' the first part with the second.
+
+      Answer to the question - `/usr/local/sbin/var/sbin/foo`.
+  symbology-201-300: &symbology-201-300
+    question: |
+      trap finish TERM EXIT
+    answer: |
+      This will call the `finish` function when the current process receives either the `TERM` or `EXIT` signals.
+
+  pipes-101-100: &pipes-101-100
+    question: |
+      find . -name '*.txt' | xargs wc -l
+    answer: |
+      Print the number of lines per file ending in `.txt`.
+      Depending on the versions of the tools you're using, this may also print a total.
+  pipes-101-200: &pipes-101-200
+    question: |
+      cat /tmp/file-i-got-from-ops.csv | \
+        while read line; do
+          cf set-env $APP_NAME $line
+        done
+    answer: |
+      Execute `cf set-env` once per line in the `/tmp` file, using the contents of the line as the last argument.
+  pipes-101-300: &pipes-101-300
+    question: |
+      history | \
+        awk '{print $2}' | \
+        sort | \
+        uniq -c | \
+        sort -r | \
+        head -10
+    answer: |
+      Print the top 10 most commonly used commands in your history.
+      `history` prints all the commands it knows about with a command number.
+      A line might look like `8292 ls -lha`, where 8292 is the command number.
+      `awk '{print $2}'` prints the second "word" of the line determined by your 'field separator' (-F).
+      `sort` arranges all the input alpha-numerically.
+      `uniq` returns the input with all _adjacently duplicate_ lines de-duplicated.
+      `uniq -c` does the above with, prepended with a count.
+          At this point, we have a list of all the command with their usage counts like `999 git`
+      `sort -r` sorts, but descending, so at this point, the most used commands are at the top.
+      `head -10` returns the top 10.
+
+  misc-101-100: &misc-101-100
+    question: |
+      pkill -lf java
+            vs.
+      ps aux | grep java | \
+        awk '{print $1}' | xargs kill
+    answer: |
+      There is no difference.
+      Both commands will kill all commands that contain `java` in the _entire_ command line.
+      e.g.
+        java -jar spring-app.jar # would be killed
+        ruby foo.rb Foo.java # would be killed
+        j ava # would not be killed (`j` is a made-up command)
+  misc-101-200: &misc-101-200
+    question: |
+      curl http://localhost:4567 -d @- <<-'JSON'
+        {“hi”: “mom”}
+      JSON
+    answer: |
+      Send an HTTP POST request to localhost:4567 with the body `{"hi": "mom"}`.
+      The `-d @-` says to send a body with the request (and flips you to POST if you don't have `-X`) _from a file_.
+      That file being, in this case STDIN because we used `-`.
+      The `<<-'JSON'` is a 'heredoc' that is being 'piped' (?) into the command.
+      Heredocs start with a "keyword" (in this case `JSON`) and then go until a line that starts and ends with exactly that keyword.
+      The `'` surrounding JSON tell the processor not to interpolate into the string.
+  misc-101-300: &misc-101-300
+    question: |
+      CONTENTS="foo,2,bar\nbaz,4,qux"
+      echo -e "$CONTENTS" > file.csv
+      SCRIPT=$(cat <<-'AWK'
+            BEGIN { SUM = 0 }
+            { SUM += $2 }
+            END { print SUM }
+      AWK
+      )
+      awk -F',' "$SCRIPT" file.csv
+    answer: |
+      Print some CSV into a file called `file.csv`.
+      Craft an AWK script into a variable called `$SCRIPT`.
+      This AWK script will initialize a variable called `SUM` to 0, add the value in the second 'field' to SUM once per record, then print the value of SUM.
+      Execute the awk script with the 'field separator' set to commas (',').
+      This prints: `6`.
+
+  when-to-break-out-101-100: &when-to-break-out-101-100
+    question: |
+      APP_NAME="${APP_NAME%.com}"
+    answer: |
+      Bash variable expansion is ... expansive.
+      This particular case removes the _suffix_ `.com` from the contents of the variable `APP_NAME`.
+      e.g.
+      APP_NAME=google.com
+      echo "${APP_NAME%.com}" # prints 'google'
+  when-to-break-out-101-200: &when-to-break-out-101-200
+    question: |
+      cat data/source-csv.csv | \
+        ruby -n <<-'RUBY' >> data/generated.csv
+          line = $_
+          if line =~ (/^\s+\(/)
+            part1, _, *part2 = line.split(",")
+            puts [part1, *part2].join(",") + ","
+          else
+            puts line
+          end
+        RUBY
+    answer: |
+      Execute a ruby script, and print the generated values in to `data/generated.csv`.
+      The important thing here is that you can do things like this and call out to general purpose languages when you need to.
+      That said, at this point, you probably would be better off writing a full-service script that does this.
+      Also, `>>` will append to a file (like `data/generated.csv`) whereas `>` will overwrite the file.
+  when-to-break-out-101-300: &when-to-break-out-101-300
+    question: |
+      curl http://example.com/some-big-csv.csv | \
+        tar xzf - | \
+        awk -f convert-csv-to-json.awk | \
+        mongodb -insert
+    answer: |
+      This script does a few things:
+
+      1. pull down a file called `some-big-csv.csv` from a remote server.
+      1. "Untar" it (tar x), using additional compression of gzip (z), from STDIN (f -)
+      1. Magically convert the CSV to JSON using awk - imagine each line
+         being well-structured and adding `{}` + keys.
+      1. Send the JSON somewhere
+
+      The _really_ interesting thing about this, is that the script can do all
+      of this "in flight" and the data never lands on disk during the process.
+      If you were to do this one step at a time, you'd need to wait for each step to complete.
+      With a pipeline like this, your bottleneck becomes whatever the slowest step is (probably DB or cURL).
+
+
+tiles:
+  scripting-101:
+    100: *scripting-101-100
+    200: *scripting-101-200
+    300: *scripting-101-300
+  symbology-101:
+    100: *symbology-101-100
+    200: *symbology-101-200
+    300: *symbology-101-300
+  symbology-201:
+    100: *symbology-201-100
+    200: *symbology-201-200
+    300: *symbology-201-300
+  pipes-101:
+    100: *pipes-101-100
+    200: *pipes-101-200
+    300: *pipes-101-300
+  misc-101:
+    100: *misc-101-100
+    200: *misc-101-200
+    300: *misc-101-300
+  when-to-break-out-101:
+    100: *when-to-break-out-101-100
+    200: *when-to-break-out-101-200
+    300: *when-to-break-out-101-300
